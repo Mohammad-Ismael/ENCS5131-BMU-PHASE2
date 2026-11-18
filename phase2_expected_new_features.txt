@@ -1,0 +1,30 @@
+========================================================================================================
+BMU PHASE 2: REFERENCE STIMULUS & EXPECTED OUTPUTS (NEW FEATURES & BUG CORNERS)
+========================================================================================================
+
+You can use this reference test vector suite to verify your new RTL feature additions
+and confirm that their RTL bug fixes are properly resolving the defects.
+
+Clock Frequency: 100 MHz (10 ns period)
+Latency: 1 clock cycle (Output valid and data observed at Cycle T+1 after valid_i at Cycle T).
+
+--------------------------------------------------------------------------------------------------------
+Test Case | Opcode     | rs1_i        | rs2_i        | Expected rd_o | Explanation
+--------------------------------------------------------------------------------------------------------
+Part A: New Phase 2 Features
+  1.      | BMU_ORC_B  | 0x0012_0034  | 0x0000_0000  | 0x00FF_00FF   | Bytes 0 & 2 non-zero -> 0xFF
+  2.      | BMU_ORC_B  | 0x0000_0000  | 0x0000_0000  | 0x0000_0000   | All bytes zero -> 0x00
+  3.      | BMU_PACK   | 0xAAAA_1234  | 0xBBBB_5678  | 0x5678_1234   | {rs2[15:0], rs1[15:0]}
+  4.      | BMU_PACKU  | 0xAAAA_1234  | 0xBBBB_5678  | 0xBBBB_AAAA   | {rs2[31:16], rs1[31:16]}
+  5.      | BMU_PACKH  | 0xAAAA_BB12  | 0xCCCC_DD34  | 0x0000_3412   | {16'h0, rs2[7:0], rs1[7:0]}
+
+Part B: Verification of Bug Fixes (Regression Targets)
+  6.      | BMU_CLZ    | 0x0000_0000  | 0x0000_0000  | 0x0000_0020   | CLZ(0) must return 32 (not 0)
+  7.      | BMU_CTZ    | 0x8000_0000  | 0x0000_0000  | 0x0000_001F   | CTZ(MSB) must return 31 (not 32)
+  8.      | BMU_SH3ADD | 0x0000_0005  | 0x0000_0003  | 0x0000_002B   | (5 << 3) + 3 = 43 (not 23)
+  9.      | BMU_MIN    | 0xFFFF_FFFB  | 0x0000_000A  | 0xFFFF_FFFB   | Signed MIN(-5, 10) = -5 (not 10)
+ 10.      | BMU_SEXT_B | 0x0000_0080  | 0x0000_0000  | 0xFFFF_FF80   | Replicate bit 7 (not bit 6)
+ 11.      | BMU_BCLR   | 0xFFFF_FFFF  | 0x0000_001F  | 0x7FFF_FFFF   | Clear bit 31 (not bit 0)
+ 12.      | BMU_BEXT   | 0x0001_0000  | 0x0000_0010  | 0x0000_0001   | Extract bit 16 (not bit 0)
+ 13.      | (Hold test)| valid_i = 0  | idle         | (Last result) | rd_o must hold previous calculation
+--------------------------------------------------------------------------------------------------------
